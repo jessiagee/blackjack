@@ -1,27 +1,51 @@
-# tracks how many cards are dealt and when they are dealt
+# -*- coding: utf-8 -*-
+"""
+The dealer for the blackjack game
+"""
+
 from blackjack.hand import Hand
 import player
 
-global hand
+global HAND  # The dealer's global reference to the Hand class
 
 
-def deal_start_cards(deck):
-    global hand
-    hand = Hand([deck.pop(), deck.pop()], True)
+def deal_start_cards(game_deck):
+    """
+    Deals the starting cards for the game.
+    Sets the global HAND list for both dealer and player.
+    Dealer's HAND has a hidden card at the start.
 
-    player.hand = Hand([deck.pop(), deck.pop()])
+    :param game_deck: the current game deck
+    :type game_deck: a list of Card objects
+    """
+    global HAND
+
+    HAND = Hand([game_deck.pop(), game_deck.pop()], hidden=True)
+
+    player.HAND = Hand([game_deck.pop(), game_deck.pop()])
 
 
-def deal_single_card(deck, dealer=False):
-    global hand
+def deal_single_card(game_deck, dealer=False):
+    """
+    Deals a single card to either dealer or player.
+
+    :param game_deck: the current game deck
+    :param dealer: whether or not this is to deal a single card to the dealer
+    :type game_deck: a list of Card objects
+    :type dealer: bool
+    """
+    global HAND
 
     if dealer is True:
-        hand.add_card(deck.pop())
+        HAND.add_card(game_deck.pop())
     else:
-        player.hand.add_card(deck.pop())
+        player.HAND.add_card(game_deck.pop())
 
 
 def reveal_cards():
-    global hand
+    """
+    Recreates the dealer's cards so that the first is no longer hidden.
+    """
+    global HAND
 
-    hand = Hand(hand.cards)
+    HAND = Hand(HAND.cards)

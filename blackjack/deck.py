@@ -1,8 +1,7 @@
-# aces can be either 1 or 11 (player's choice)
-# face cards are 10
-
-# A "standard" deck of playing cards consists of 52 Cards in each of the 4 suits of Spades, Hearts, Diamonds,
-# and Clubs. Each suit contains 13 cards: Ace, 2, 3, 4, 5, 6, 7, 8, 9, 10, Jack, Queen, King.
+# -*- coding: utf-8 -*-
+"""
+A module that represents a deck of cards.
+"""
 
 import random
 
@@ -10,23 +9,31 @@ import random
 def create():
     """
     Create the deck
-    :return: a deck of cards (a list with tuples)
+
+    :return: (list of tuples) deck: the created deck
     """
 
+    # A "standard" deck of playing cards consists of 52 Cards in each of the 4 suits of Spades,
+    # Hearts, Diamonds, and Clubs. Each suit contains 13 cards: Ace, 2, 3, 4, 5, 6, 7, 8,
+    # 9, 10, Jack, Queen, King.
+
+    # Aces can be either 1 or 11 (player's choice)
+    # King, Queen, Jack cards are 10
+    # Other cards are face value
     cards = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King']
 
     suits = ['Spades', 'Hearts', 'Diamonds', 'Clubs']
 
     deck = []
 
-    while True:
+    points = 0
+    while points == 0:
         ace_high_or_low = input("Should aces be high or low? [High, Low]  ")
         ace_high_or_low = ace_high_or_low.upper()
 
-        if ace_high_or_low == "HIGH" or ace_high_or_low == "LOW":
+        if ace_high_or_low in ('HIGH', 'LOW'):
             points = 11 if ace_high_or_low == 'HIGH' else 1
             print(f"Aces will be {ace_high_or_low} and count for {points} points!\n")
-            break
         else:
             print(f"The input {ace_high_or_low} is incorrect! Please use high or low!")
             continue
@@ -44,7 +51,8 @@ def create():
 def shuffle_cards(deck):
     """
     Shuffle the deck
-    :return:
+
+    :return: (list of tuples) deck: the shuffled deck
     """
 
     random.shuffle(deck)
@@ -52,10 +60,8 @@ def shuffle_cards(deck):
     return deck
 
 
-"""
-Code below is adapted from user Vader on StackOverflow
-https://codereview.stackexchange.com/q/82103
-"""
+# Code below is adapted from user Vader on StackOverflow
+# (https://codereview.stackexchange.com/q/82103)
 
 CARD = """\
 ┌─────────┐
@@ -120,7 +126,8 @@ def ascii_version_of_card(*cards):
 
 def ascii_version_of_hidden_card(*cards):
     """
-    Essentially the dealers method of print ascii cards. This method hides the first card, shows it flipped over
+    Essentially the dealers method of print ascii cards. This method hides the first card,
+    shows it flipped over
     :param cards: A list of card objects, the first will be hidden
     :return: A string, the nice ascii version of cards
     """
@@ -129,6 +136,7 @@ def ascii_version_of_hidden_card(*cards):
 
 
 class Card:
+    """ Represents a card in a deck """
 
     card_values = {
         '2': 2,

@@ -1,11 +1,9 @@
-# game flow is this
-#
-# create a deck of cards, shuffle that deck
-# player places a bet
-# dealer deals themself two cards (one face up and one face down) and the player two cards (both face down)
-# player decides whether to hit, stand, double, or split
-# loops until player wins or loses
-# reset with new shuffle
+# -*- coding: utf-8 -*-
+"""
+The game manager for the blackjack game.  Handles creating the deck, distributing cards, and the
+main game loop.
+"""
+import sys
 
 import dealer
 import deck
@@ -14,7 +12,12 @@ import player
 
 def setup(new_game=True):
     """
-    Sets the game up to be played
+    Sets the game up to be played. Creates the deck which shuffles the cards.
+    Allows the player to place an initial bet after printing their current BANKROLL.
+    Dealer than deals cards for both dealer and player and then the game starts.
+
+    :param new_game: is this a new game?
+    :type new_game: bool
     """
     game_deck = deck.create()
     player.bet(new_game)
@@ -24,8 +27,21 @@ def setup(new_game=True):
 
 
 def play_game(game_deck):
-    player_points = player.hand.points
-    dealer_points = dealer.hand.points
+    """
+    The game loop
+
+    While the player has less than 21 points, they are able to hit, stand, or double.
+    If the player goes over 21 points in this loop, they bust and lose.
+    If a player hits 21 points in this loop, they get blackjack and win.
+
+    Once determined if the player wins or loses, they are allowed to replay if they still
+    have money in their BANKROLL.
+
+    :param game_deck: the current deck of cards
+    :type game_deck: a list of Card objects
+    """
+    player_points = player.HAND.points
+    dealer_points = dealer.HAND.points
 
     while player_points < 21:
         print_hands()
@@ -33,32 +49,13 @@ def play_game(game_deck):
         command = get_next_command()
 
         if command == 'HIT':
-            dealer.deal_single_card(game_deck)
-            player_points = player.hand.points
+            player_points = hit(game_deck)
         elif command == 'STAND':
-            dealer.reveal_cards()
-            determine_winner(game_deck, player_points, dealer_points)
-            break
+            stand(game_deck, player_points, dealer_points)
+            return
         elif command == 'DOUBLE':
-            """The player is allowed to increase the initial bet by up to 100% in exchange for committing to stand after 
-            receiving exactly one more card. The additional bet is placed in the betting box next to the original bet. 
-            Some games do not permit the player to increase the bet by amounts other than 100%. Non-controlling players 
-            may double their wager or decline to do so, but they are bound by the controlling player's decision to take 
-            only one card. """
-        elif command == 'SPLIT':
-            """If the first two cards of a hand have the same value, the player can split them into two hands, by moving 
-            a second bet equal to the first into an area outside the betting box. The dealer separates the two cards and 
-            draws an additional card on each, placing one bet with each hand. The player then plays out the two separate 
-            hands in turn; except for a few restrictions, the hands are treated as independent new hands, with the player 
-            winning or losing their wager separately for each hand. Occasionally, in the case of ten-valued cards, 
-            some casinos allow splitting only when the cards have the identical ranks; for instance, a hand of 10-10 may 
-            be split, but not one of 10-king. However, usually all 10-value cards are treated the same. Doubling and 
-            further splitting of post-split hands may be restricted, and an ace and ten value card after a split are 
-            counted as a non-blackjack 21. Hitting split aces is usually not allowed. Non-controlling players may follow 
-            the controlling player by putting down an additional bet or decline to do so, instead associating their 
-            existing wager with one of the two post-split hands. In that case they must choose which hand to play behind 
-            before the second cards are drawn. Some casinos do not give non-controlling players this option, and require 
-            that the wager of a player not electing to split remains with the first of the two post-split hands. """
+            double(game_deck, dealer_points)
+            return
         else:
             print(f"Command {command} not recognized")
 
@@ -72,23 +69,40 @@ def play_game(game_deck):
 
 
 def get_next_command():
+    """
+    Asks players to hit, stand, or double, validates the input, and returns
+    the command.
+
+    :returns: (string) command: HIT, STAND, or DOUBLE
+    """
     while True:
-        command = input("Do you want to hit, stand, double, or split?  ")
+        command = input("Do you want to hit, stand, or double?  ")
         command = command.upper()
 
-        if command == "HIT" or command == "STAND" or command == "DOUBLE" or command == "SPLIT":
-            break
-        else:
+        if command not in ('HIT', 'STAND', 'DOUBLE'):
             print(f"The command {command} is incorrect! Please re-enter a correct command.\n")
             continue
+
+        break
 
     return command
 
 
-def determine_winner(deck, player_points, dealer_points):
+def determine_winner(game_deck, player_points, dealer_points):
+    """
+    Dealer gives themselves cards until they reach 17 and
+    then the total player and dealer points are compared.
+
+    :param game_deck: the current deck of cards
+    :param player_points: the player's current points
+    :param dealer_points: the dealer's current points
+    :type game_deck: list of Card objects
+    :type player_points: int
+    :type dealer_points: int
+    """
     while dealer_points <= 17:
-        dealer.deal_single_card(deck, dealer=True)
-        dealer_points = dealer.hand.points
+        dealer.deal_single_card(game_deck, dealer=True)
+        dealer_points = dealer.HAND.points
         print_hands()
 
     if player_points > dealer_points or dealer_points > 21:
@@ -101,18 +115,63 @@ def determine_winner(deck, player_points, dealer_points):
     replay()
 
 
-def split():
-    pass
+def hit(game_deck):
+    """
+    Player gets another card added to their HAND and their points increase.
+
+    :param game_deck: the current deck of cards
+    :type game_deck: list of Card objects
+
+    :returns: (int) player_points: the number of points the player has in their HAND
+    """
+    dealer.deal_single_card(game_deck)
+    print_hands()
+
+    player_points = player.HAND.points
+    return player_points
 
 
-def double():
-    pass
+def stand(game_deck, player_points, dealer_points):
+    """
+    Player will get no more cards, dealer will reveal their cards,
+     and a winner will be determined from points after dealer hits 17.
+
+    :param game_deck: the current deck of cards
+    :param player_points: the current points of the player
+    :param dealer_points: the current points of the dealer
+    :type game_deck: list of Card objects
+    :type player_points: int
+    :type dealer_points: int
+    """
+    dealer.reveal_cards()
+    print_hands()
+
+    determine_winner(game_deck, player_points, dealer_points)
+
+
+def double(game_deck, dealer_points):
+    """
+    Doubles the player's bet, gives them one more card, and then stands.
+
+    :param game_deck: the current deck of cards
+    :param dealer_points: the number of points the dealer has
+    :type game_deck: list of Card objects
+    :type dealer_points: int
+    """
+    player.double()
+    player_points = hit(game_deck)
+    stand(game_deck, player_points, dealer_points)
 
 
 def replay():
     """
-    Replays the game depending on player input
+    Replays the game depending on player input if they still have
+    money in their BANKROLL
     """
+    if player.BANKROLL.balance <= 0:
+        print(f"\nYou've run out of money! Time to call it a day!\n")
+        sys.exit()
+
     user_input = 'Do you want to play again? [Y, N]: '
     valid_key_1 = 'Y'
     valid_key_2 = 'N'
@@ -122,37 +181,43 @@ def replay():
     if response == 'Y':
         setup(new_game=False)
     else:
-        print(f"Your final bankroll was ${player.bankroll.balance}!")
-        exit()
+        print(f"Your final bankroll was ${player.BANKROLL.balance}!")
+        sys.exit()
 
 
 def validate_input(user_input, valid_key_1, valid_key_2):
     """
     Validates the player's input.
 
-    INPUT: user_input (string)
-            valid_key_1 (string)
-            valid_key_2 (string)
+    :param user_input: the user's input
+    :param valid_key_1: the key to check for validity
+    :param valid_key_2: the key to check for validity
+    :type user_input: string
+    :type valid_key_1: string
+    :type valid_key_2: string
 
-    OUTPUT: to_validate (string)
+    :return: to_validate (string)
     """
 
     while True:
         to_validate = input(user_input)
         to_validate = to_validate.upper()
 
-        if to_validate == valid_key_1 or to_validate == valid_key_2:
+        if to_validate in (valid_key_1, valid_key_2):
             return to_validate
-        else:
-            print("Incorrect option! Try again.")
-            continue
+
+        print("Incorrect option! Try again.")
+        continue
 
 
 def print_hands():
+    """
+    Prints out the player's and dealer's HANDs
+    """
     print("=" * 10 + " DEALER " + "=" * 10)
-    print(dealer.hand)
+    print(dealer.HAND)
     print("=" * 10 + " PLAYER " + "=" * 10)
-    print(player.hand)
+    print(player.HAND)
 
 
 if __name__ == "__main__":
